@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="animation_speed">300</integer>
+    <integer name="defualt_masterkey_size">4096</integer>
+    <integer name="defualt_disposablekey_size">4096</integer>
 </resources>
