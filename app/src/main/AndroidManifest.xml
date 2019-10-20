@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.ftf.phi" >
-
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -11,29 +11,25 @@
         tools:ignore="GoogleAppIndexingWarning">
         <activity
             android:name="com.ftf.phi.pages.Accounts"
-            android:label="@string/app_name" >
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="com.ftf.phi.pages.Feed">
-        </activity>
-        <activity
-            android:name="com.ftf.phi.pages.FriendCamera">
-        </activity>
-        <activity
-            android:name="com.ftf.phi.pages.FriendQR">
-        </activity>
-        <activity
-            android:name="com.ftf.phi.pages.Message">
-        </activity>
-        <activity
-            android:name="com.ftf.phi.pages.Messages">
-        </activity>
-        <activity
-            android:name="com.ftf.phi.pages.Settings">
-        </activity>
+        <activity android:name="com.ftf.phi.pages.Feed"/>
+        <activity android:name="com.ftf.phi.pages.FriendCamera"/>
+        <activity android:name="com.ftf.phi.pages.FriendQR"/>
+        <activity android:name="com.ftf.phi.pages.Message"/>
+        <activity android:name="com.ftf.phi.pages.Messages"/>
+        <activity android:name="com.ftf.phi.pages.Settings"/>
+
+        <receiver android:name="com.ftf.phi.AutoBoot">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name="com.ftf.phi.account.AccountManager"/>
     </application>
 </manifest>
