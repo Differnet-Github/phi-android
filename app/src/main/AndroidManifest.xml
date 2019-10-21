@@ -4,11 +4,15 @@
     package="com.ftf.phi" >
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <application
-        android:allowBackup="true"
-        android:icon="@drawable/ic_launcher"
+        android:name=".application.Phi"
+
+        android:allowBackup="false"
+        tools:ignore="GoogleAppIndexingWarning"
+
         android:label="@string/app_name"
-        android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen"
-        tools:ignore="GoogleAppIndexingWarning">
+        android:icon="@drawable/ic_launcher"
+
+        android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen">
         <activity
             android:name="com.ftf.phi.pages.Accounts"
             android:label="@string/app_name">
