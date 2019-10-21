@@ -33,6 +33,13 @@ public class Accounts extends Page {
 				overridePendingTransition( R.anim.left_in, R.anim.left_out);
 			}
 		});
+
+		final Button newAccountButton = this.findViewById(R.id.new_account);
+		newAccountButton.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v){
+				new Password().show(v);
+			}
+		});
 	}
 
 	public void swipeRight(){
