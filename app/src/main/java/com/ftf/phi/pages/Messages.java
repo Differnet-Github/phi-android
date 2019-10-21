@@ -6,9 +6,9 @@ import android.view.View;
 import android.widget.Button;
 
 import com.ftf.phi.R;
-import com.ftf.phi.TouchManager;
+import com.ftf.phi.application.Page;
 
-public class Messages extends TouchManager {
+public class Messages extends Page {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

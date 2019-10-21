@@ -4,9 +4,9 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.ftf.phi.R;
-import com.ftf.phi.TouchManager;
+import com.ftf.phi.application.Page;
 
-public class Settings extends TouchManager {
+public class Settings extends Page {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

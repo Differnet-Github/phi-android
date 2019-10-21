@@ -3,9 +3,9 @@ package com.ftf.phi.pages;
 import android.os.Bundle;
 
 import com.ftf.phi.R;
-import com.ftf.phi.TouchManager;
+import com.ftf.phi.application.Page;
 
-public class FriendCamera extends TouchManager {
+public class FriendCamera extends Page {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

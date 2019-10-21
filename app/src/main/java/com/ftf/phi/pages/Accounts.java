@@ -6,9 +6,10 @@ import android.view.View;
 import android.widget.Button;
 
 import com.ftf.phi.R;
-import com.ftf.phi.TouchManager;
+import com.ftf.phi.application.Page;
+import com.ftf.phi.popup.Password;
 
-public class Accounts extends TouchManager {
+public class Accounts extends Page {
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -34,7 +35,6 @@ public class Accounts extends TouchManager {
 		});
 	}
 
-	@Override
 	public void swipeRight(){
 		Intent myIntent = new Intent(getApplicationContext(), Settings.class);
 		startActivity(myIntent);

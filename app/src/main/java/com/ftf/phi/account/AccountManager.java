@@ -12,6 +12,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+/* The account manager is in charge of all things that have to do with account
+ * This includes:
+ * 	Reading and writing files for accounts
+ * 	Running the services for accounts
+ * 	Getting posts associated with accounts
+ * 	Getting messages associated with accounts
+ * 	Locking and unlocking accounts
+ */
 public class AccountManager extends Service {
 
 	@Nullable
@@ -22,6 +30,7 @@ public class AccountManager extends Service {
 
 	private ArrayList<Account> accounts = new ArrayList();
 
+	//When the manager is created we want to load the accounts from memory
 	@Override
 	public void onCreate(){
 		super.onCreate();
@@ -36,6 +45,7 @@ public class AccountManager extends Service {
 		return START_STICKY;
 	}
 
+	//When the manager is destroyed we want to save all accounts
 	@Override
 	public void onDestroy(){
 		for(int i = accounts.size() - 1; i > -1; i--){
@@ -49,12 +59,14 @@ public class AccountManager extends Service {
 		}
 	}
 
+	// Function to create a new account
 	public String createAccount(){
 		Account newAccount = new Account();
 		accounts.add(newAccount);
 		return newAccount.getID();
 	}
 
+	// Function to remove an account
 	public void removeAccount(String id){
 		for(int i = accounts.size() - 1; i > -1; i--){
 			if(accounts.get(i).getID() == id){
@@ -62,5 +74,15 @@ public class AccountManager extends Service {
 				return;
 			}
 		}
+	}
+
+	public String[] getAccounts(){
+		//TODO: return account list
+		return new String[0];
+	}
+
+	public Account getAccount(String id){
+		//TODO: return the target account
+		return null;
 	}
 }

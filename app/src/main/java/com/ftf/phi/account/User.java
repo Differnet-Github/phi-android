@@ -10,4 +10,9 @@ public class User {
 	public String getID(){
 		return this.fingerprint;
 	}
+
+	public byte[] getPhoto(){
+		//TODO: make this get the users photo
+		return new byte[0];
+	}
 }
