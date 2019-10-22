@@ -19,32 +19,42 @@ public class TouchManager implements Application.ActivityLifecycleCallbacks {
 
 	private final double PINCH_ANGLE = 2.5;
 
-	ArrayList<Touch> touches = new ArrayList();
+	private ArrayList<Touch> touches = new ArrayList<>();
 
 	//We are storing a touch listener here so we aren't instantiating it for every activity
-	View.OnTouchListener touchListener;
+	private View.OnTouchListener touchListener;
 
-	public TouchManager(){
+	TouchManager(){
 		touchListener = new View.OnTouchListener() {
 			@Override
-			public boolean onTouch(View v, MotionEvent event) {
+			public boolean onTouch(View v, MotionEvent event){
 				int index = event.getActionIndex();
 				int id = event.getPointerId(index);
 				int action = event.getActionMasked() & MotionEvent.ACTION_MASK;
 
-				getTouch(id);
-				for(int i = touches.size() - 1; i >= -1; i--){
+				while(touches.size() - 1 < id){
+					touches.add(new Touch());
+				}
+				for(int i = touches.size() - 1; i > -1; i--){
 					try{
-						getTouch(i).update(event, i);
+						touches.get(i).update(event, i);
 					}
 					catch(Exception err){
-
+						//We get an exception if the id is no longer defined
+						touches.remove(i);
 					}
 				}
 
 				//Get the Touches that we will be using
-				Touch primary = getTouch(0);
-				Touch secondary = getTouch(1);
+				Touch primary = touches.get(0);
+				Touch secondary;
+				try{
+					secondary = touches.get(1);
+				}
+				catch(Exception e){
+					secondary = new Touch();
+					touches.add(secondary);
+				}
 
 				//Calculate swipe
 				double distance = primary.distance.abs();
@@ -83,16 +93,10 @@ public class TouchManager implements Application.ActivityLifecycleCallbacks {
 						}
 					}
 				}
-				return false;
+				v.performClick();
+				return true;
 			}
 		};
-	}
-
-	private Touch getTouch(int i){
-		if(i >= touches.size() - 1){
-			touches.add(i, new Touch());
-		}
-		return touches.get(i);
 	}
 
 	@Override
@@ -131,25 +135,23 @@ public class TouchManager implements Application.ActivityLifecycleCallbacks {
 
 	}
 
-	class Touch {
+	private class Touch {
 
-		public boolean down;
+		private boolean down;
 
-		public Vector start;
-		public Vector end;
-		public Vector displacement;
-		public Vector distance;
+		private Vector start;
+		private Vector end;
+		private Vector distance;
 
-		public Touch(){
+		private Touch(){
 			down = false;
 
 			start = new Vector();
 			end = new Vector();
-			displacement = new Vector();
 			distance = new Vector();
 		}
 
-		protected void update(MotionEvent event, int id){
+		private void update(MotionEvent event, int id){
 			int action = event.getActionMasked() & MotionEvent.ACTION_MASK;
 			int index = event.findPointerIndex(id);
 
@@ -165,13 +167,10 @@ public class TouchManager implements Application.ActivityLifecycleCallbacks {
 					this.start = new Vector(x, y);
 
 					//Reset all points that are not the start
-					this.displacement = new Vector();
 					this.distance = new Vector();
 					this.end = this.start;
 					break;
 				case MotionEvent.ACTION_MOVE:
-					//Update Displacement from last time
-					this.displacement = new Vector(distance.x - event.getX(), distance.y - event.getY());
 					//Update the distance traveled
 					this.distance = new Vector(this.start.x - x, this.start.y - y);
 					//Update end point
@@ -192,20 +191,20 @@ public class TouchManager implements Application.ActivityLifecycleCallbacks {
 }
 
 class Vector {
-	public double x;
-	public double y;
+	double x;
+	double y;
 
-	public Vector(){
+	Vector(){
 		this.x = 0;
 		this.y = 0;
 	}
 
-	public Vector(double x, double y){
+	Vector(double x, double y){
 		this.x = x;
 		this.y = y;
 	}
 
-	public double abs(){
+	double abs(){
 		return Math.pow(Math.pow(this.x, 2) + Math.pow(this.y, 2), 0.5);
 	}
 }

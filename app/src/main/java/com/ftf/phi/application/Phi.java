@@ -2,6 +2,7 @@ package com.ftf.phi.application;
 
 import android.app.Activity;
 import android.app.Application;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,13 @@ public class Phi extends Application {
 	private static Phi instance;
 	public static Phi getInstance(){
 		return instance;
+	}
+
+	public void setPage(Class newPage, int in, int out) {
+		Intent newIntent= new Intent(getApplicationContext(), newPage);
+		Activity oldPage = currentPage;
+		oldPage.startActivity(newIntent);
+		oldPage.overridePendingTransition(in, out);
 	}
 
 	public void onCreate() {
@@ -42,7 +50,7 @@ public class Phi extends Application {
 }
 
 class ActivePage implements Application.ActivityLifecycleCallbacks {
-	Phi app;
+	private Phi app;
 	@Override
 	public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
 		app = (Phi) activity.getApplicationContext();
