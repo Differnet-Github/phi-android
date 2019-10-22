@@ -1,10 +1,11 @@
 package com.ftf.phi.pages;
 
 import android.os.Bundle;
-import android.util.Log;
 
 import com.ftf.phi.R;
 import com.ftf.phi.application.Page;
+import com.ftf.phi.application.Phi;
+import com.ftf.phi.pages.accounts.Accounts;
 
 public class Settings extends Page {
 
@@ -12,13 +13,15 @@ public class Settings extends Page {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.settings);
-
-		Log.d("account", "Created Settings Activity");
 	}
 
 	@Override
 	public void swipeLeft(){
 		onBackPressed();
-		overridePendingTransition( R.anim.left_in, R.anim.left_out);
+	}
+
+	@Override
+	public void onBackPressed(){
+		Phi.getInstance().setPage(Accounts.class, R.anim.left_in, R.anim.left_out);
 	}
 }

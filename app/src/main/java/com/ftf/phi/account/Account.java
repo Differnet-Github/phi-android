@@ -16,6 +16,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 
+import javax.crypto.SecretKey;
+
 public class Account {
 
 	File directory;
@@ -42,6 +44,21 @@ public class Account {
 		archive = new Archive(masterKey);
 
 		network = new Network(disposableKey);
+
+		try{
+			body = new Body(disposableKey);
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+
+		javax.crypto.KeyGenerator keyGen = null;
+		try {
+			keyGen = javax.crypto.KeyGenerator.getInstance("AES");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+		keyGen.init(256); // for example
+		accessKey = keyGen.generateKey().getEncoded();
 
 		try {
 			this.save();

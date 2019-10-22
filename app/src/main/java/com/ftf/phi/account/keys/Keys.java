@@ -4,7 +4,6 @@ import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
@@ -27,8 +26,8 @@ public class Keys {
 
 	protected void genKeys(int size) {
 		try{
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-			keyGen.initialize(size);
+			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+//			keyGen.initialize(size);
 			KeyPair pair = keyGen.generateKeyPair();
 
 			this.privateKey = pair.getPrivate();
@@ -90,15 +89,15 @@ public class Keys {
 			throw new Exception();
 		}
 		else {
-			Signature signature = Signature.getInstance("SHA1withRSA", "BC");
+			Signature signature = Signature.getInstance("SHA256withECDSA");
 			signature.initSign(this.privateKey);
 			signature.update(data);
 			return signature.sign();
 		}
 	}
 
-	public boolean verify(byte[] data, byte[] signature) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-		Signature checker = Signature.getInstance("SHA1withRSA", "BC");
+	public boolean verify(byte[] data, byte[] signature) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+		Signature checker = Signature.getInstance("SHA256withECDSA");
 		checker.initVerify(this.publicKey);
 		checker.update(data);
 		return checker.verify(signature);

@@ -11,7 +11,7 @@ public class KeyGenerator {
 
 	public KeyGenerator(){
 		master = new Authorization();
-		master = new Authorization();
+		disposable = new Authorization();
 	}
 
 	public KeyGenerator(JSONObject auths) {

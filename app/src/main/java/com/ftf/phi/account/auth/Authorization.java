@@ -1,9 +1,12 @@
 package com.ftf.phi.account.auth;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class Authorization {
@@ -36,8 +39,28 @@ public class Authorization {
 		}
 	}
 
-	public void getKey(){
-		//TODO: Implement with a callback
+	public void getKey(final AuthCallback callback) throws NoSuchAlgorithmException {
+		final ArrayList<byte[]> keys = new ArrayList();
+
+		for(int i = this.methods.size() - 1; i > -1; i--){
+			this.methods.get(i).getKey(new AuthCallback() {
+				@Override
+				public void call(byte[] authToken) {
+					keys.add(authToken);
+					if(keys.size() == methods.size()){
+						joinKeys(callback, keys);
+					}
+				}
+			});
+		}
+	}
+
+	public void joinKeys(AuthCallback callback, ArrayList<byte[]> keys){
+		//TODO: join all of the keys in a nice way
+		for(int i = 0; i < keys.size(); i++){
+			Log.d("Key", i + ": " + keys.get(i).toString());
+		}
+		callback.call(keys.get(0));
 	}
 
 	public JSONArray asJSON() throws JSONException {

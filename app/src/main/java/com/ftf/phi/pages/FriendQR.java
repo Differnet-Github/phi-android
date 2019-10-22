@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import com.ftf.phi.R;
 import com.ftf.phi.application.Page;
+import com.ftf.phi.application.Phi;
 
 public class FriendQR extends Page {
 
@@ -25,7 +26,6 @@ public class FriendQR extends Page {
 
 	@Override
 	public void onBackPressed() {
-		super.onBackPressed();
-		overridePendingTransition( R.anim.none_in, R.anim.top_out);
+		Phi.getInstance().setPage(Feed.class, R.anim.none_in, R.anim.top_out);
 	}
 }

@@ -14,7 +14,7 @@
 
         android:theme="@android:style/Theme.Light.NoTitleBar.Fullscreen">
         <activity
-            android:name="com.ftf.phi.pages.Accounts"
+            android:name="com.ftf.phi.pages.accounts.Accounts"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

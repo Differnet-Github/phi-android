@@ -4,9 +4,9 @@ import org.json.JSONObject;
 
 public class FingerprintAuth implements Auth {
 	@Override
-	public byte[] getKey(byte[] lastKey) {
+	public void getKey(AuthCallback callback) {
+		callback.call(null);
 		//TODO: create finger print auth
-		return new byte[0];
 	}
 
 	public JSONObject asJSON(){

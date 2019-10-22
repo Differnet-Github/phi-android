@@ -1,6 +1,8 @@
 package com.ftf.phi.account.auth;
 
 
+import com.ftf.phi.popup.Password;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,28 +40,25 @@ public class PasswordAuth implements Auth {
 		this.iterations = auth.getInt("iterations");
 	}
 
-	public byte[] getKey(byte[] lastKey) throws NoSuchAlgorithmException {
+	public void getKey(final AuthCallback callback) throws NoSuchAlgorithmException {
 		switch(this.algorithm){
 			case "pbkdf2":
-				byte[] hash = new byte[512];
+				new Password(new AuthCallback() {
+					@Override
+					public void call(byte[] password) {
+						PBEKeySpec spec = new PBEKeySpec(password.toString().toCharArray(), salt, iterations, 512);
+						SecretKeyFactory skf;
 
-				char[] password = new char[lastKey.length];
-				for(int i = lastKey.length - 1; i > -1; i--){
-					password[i] = (char) lastKey[i];
-				}
-
-				PBEKeySpec spec = new PBEKeySpec(password, this.salt, iterations, 512);
-				SecretKeyFactory skf;
-
-				try {
-					skf = SecretKeyFactory.getInstance(this.algorithm);
-					hash = skf.generateSecret(spec).getEncoded();
-				} catch (NoSuchAlgorithmException e) {
-					e.printStackTrace();
-				} catch (InvalidKeySpecException e) {
-					e.printStackTrace();
-				}
-				return hash;
+						try {
+							skf = SecretKeyFactory.getInstance(algorithm);
+							callback.call(skf.generateSecret(spec).getEncoded());
+						} catch (NoSuchAlgorithmException e) {
+							e.printStackTrace();
+						} catch (InvalidKeySpecException e) {
+							e.printStackTrace();
+						}
+					}
+				});
 			default:
 				throw new NoSuchAlgorithmException();
 		}

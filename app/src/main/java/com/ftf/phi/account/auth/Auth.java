@@ -6,6 +6,6 @@ import org.json.JSONObject;
 import java.security.NoSuchAlgorithmException;
 
 public interface Auth {
-	byte[] getKey(byte [] lastKey) throws NoSuchAlgorithmException;
+	void getKey(AuthCallback callback) throws NoSuchAlgorithmException;
 	JSONObject asJSON() throws JSONException;
 }

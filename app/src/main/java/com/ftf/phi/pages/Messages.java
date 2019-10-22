@@ -37,6 +37,10 @@ public class Messages extends Page {
 	@Override
 	public void swipeRight(){
 		onBackPressed();
+	}
+
+	@Override
+	public void onBackPressed(){
 		overridePendingTransition( R.anim.right_in, R.anim.right_out);
 	}
 }

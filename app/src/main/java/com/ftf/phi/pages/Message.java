@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import com.ftf.phi.R;
 import com.ftf.phi.application.Page;
+import com.ftf.phi.application.Phi;
 
 public class Message extends Page {
 
@@ -16,6 +17,10 @@ public class Message extends Page {
 	@Override
 	public void swipeRight(){
 		onBackPressed();
-		overridePendingTransition( R.anim.right_in, R.anim.right_out);
+	}
+
+	@Override
+	public void onBackPressed(){
+		Phi.getInstance().setPage(Messages.class, R.anim.right_in, R.anim.right_out);
 	}
 }
