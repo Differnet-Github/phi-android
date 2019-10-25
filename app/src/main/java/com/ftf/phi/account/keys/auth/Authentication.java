@@ -30,10 +30,6 @@ public class Authentication {
 		return methods.get(0).getKey();
 	}
 
-	public void reset(){
-		ArrayList<Method> methods = new ArrayList<>();
-	}
-
 	public void add(Method method) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
 		if(this.methods.size() == 0){
 			byte[] key = new byte[KEY_BYTES];
