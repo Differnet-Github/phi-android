@@ -15,10 +15,11 @@ import com.ftf.phi.R;
 import com.ftf.phi.ByteCallback;
 import com.ftf.phi.application.Phi;
 
-public class Popup extends Fragment {
-	View view;
+//TODO: have sperate password creater with andvanced setting
+class Popup extends Fragment {
+	private View view;
 
-	public Popup(final ByteCallback callback){
+	Popup(final ByteCallback callback){
 		Activity currentActivity = Phi.getInstance().getCurrentActivity();
 		this.view = currentActivity.getLayoutInflater().inflate(R.layout.password, null);
 
