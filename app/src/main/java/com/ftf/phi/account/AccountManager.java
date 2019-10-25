@@ -29,7 +29,11 @@ public class AccountManager extends Service {
 		File[] accountDirs = new File(getBaseContext().getFilesDir(), "accounts").listFiles();
 		if(accountDirs != null){
 			for(int i = accountDirs.length - 1; i > -1; i--){
-				accounts.add(new Account(accountDirs[i]));
+				try {
+					accounts.add(new Account(accountDirs[i]));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -54,7 +58,7 @@ public class AccountManager extends Service {
 	}
 
 	// Function to create a new account
-	public String createAccount(){
+	public String createAccount() throws Exception {
 		Account newAccount = new Account();
 		accounts.add(newAccount);
 		return newAccount.getID();

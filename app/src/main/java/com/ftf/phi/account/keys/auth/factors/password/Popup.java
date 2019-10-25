@@ -1,4 +1,4 @@
-package com.ftf.phi.popup;
+package com.ftf.phi.account.keys.auth.factors.password;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -12,13 +12,13 @@ import android.widget.PopupWindow;
 import androidx.fragment.app.Fragment;
 
 import com.ftf.phi.R;
-import com.ftf.phi.account.auth.AuthCallback;
+import com.ftf.phi.ByteCallback;
 import com.ftf.phi.application.Phi;
 
-public class Password extends Fragment {
+public class Popup extends Fragment {
 	View view;
 
-	public Password(final AuthCallback callback){
+	public Popup(final ByteCallback callback){
 		Activity currentActivity = Phi.getInstance().getCurrentActivity();
 		this.view = currentActivity.getLayoutInflater().inflate(R.layout.password, null);
 

@@ -6,22 +6,24 @@ import org.json.JSONObject;
 
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+//TODO: store with user and not in account
 public class Archive {
 
-	MasterKey master;
-	ArrayList<Archived> archive = new ArrayList();
+	private Key master;
+	private ArrayList<Archived> archive = new ArrayList<>();
 
-	public Archive(MasterKey master){
+	public Archive(Key master){
 		this.master = master;
 	}
 
-	public Archive(MasterKey master, JSONArray archive){
+	public Archive(Key master, JSONArray archive){
 		this.master = master;
 
 		for(int i = archive.length() - 1; i > -1; i--){
@@ -36,9 +38,9 @@ public class Archive {
 		}
 	}
 
-	public void add(MasterKey master, DisposableKey disposable){
+	public void add(DisposableKey disposable){
 		try{
-			this.archive.add(new Archived(master, disposable));
+			this.archive.add(new Archived(this.master, disposable));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -54,44 +56,55 @@ public class Archive {
 }
 
 class Archived{
+	private static final String HASH = "SHA-256";
+	private static final String CIPHER = "SHA-256";
+	private static final int KEY_SIZE = 256;
 
-	private byte[] publicFingerprint;
-	private byte[] privateKey;
-	private byte[] signature;
+	private byte[] fingerprint;
+
+	private String cipher;
+	private String lock;
 	private byte[] key;
+
+	private byte[] privateKey;
 
 	private long timestamp;
 
-	private String algorithm;
+	private byte[] signature;
 
-	public Archived(MasterKey master, DisposableKey disposable) throws Exception {
-		this.algorithm = "SHA-256";
+	Archived(Key master, DisposableKey disposable) throws Exception {
+		this(master, disposable, CIPHER, KEY_SIZE);
+	}
 
-		MessageDigest md = MessageDigest.getInstance(this.algorithm);
-		this.publicFingerprint =  md.digest(disposable.exportPublic());
+	private Archived(Key master, DisposableKey disposable, String cipher, int keySize) throws Exception {
+		MessageDigest md = MessageDigest.getInstance(HASH);
+		this.fingerprint =  md.digest(disposable.publicKey.getEncoded());
 
 		KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-		keyGen.init(256); // for example
+		keyGen.init(keySize);
 		SecretKey key = keyGen.generateKey();
 
-		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-		cipher.init(Cipher.ENCRYPT_MODE, key);
-		this.privateKey = cipher.doFinal(disposable.exportPrivate());
-
+		this.lock = master.getCipher();
 		this.key = master.encrypt(key.getEncoded());
+
+		this.cipher = cipher;
+		Cipher lockCipher = Cipher.getInstance(this.cipher);
+		lockCipher.init(Cipher.ENCRYPT_MODE, key);
+		this.privateKey = lockCipher.doFinal(disposable.privateKey.getEncoded());
 
 		this.timestamp = new Date().getTime();
 
 		this.signature = master.sign(this.getSignable());
 	}
 
-	public Archived(JSONObject archive) throws JSONException {
-		this.publicFingerprint = archive.getString("public").getBytes();
-		this.privateKey = archive.getString("private").getBytes();
-		this.key = archive.getString("key").getBytes();
-		this.algorithm = archive.getString("alg");
-		this.timestamp = archive.getLong("timestamp");
-		this.signature = archive.getString("signature").getBytes();
+	Archived(JSONObject fileData) throws JSONException {
+		this.fingerprint = fileData.getString("fingerprint").getBytes();
+		this.lock = fileData.getString("lock");
+		this.key = fileData.getString("key").getBytes();
+		this.cipher = fileData.getString("cipher");
+		this.privateKey = fileData.getString("private").getBytes();
+		this.timestamp = fileData.getLong("timestamp");
+		this.signature = fileData.getString("signature").getBytes();
 	}
 
 	private byte[] getSignable(){
@@ -103,20 +116,17 @@ class Archived{
 				(byte) ((this.timestamp >> 24) & 0xff),
 				(byte) ((this.timestamp >> 16) & 0xff),
 				(byte) ((this.timestamp >> 8) & 0xff),
-				(byte) ((this.timestamp >> 0) & 0xff),
+				(byte) ((this.timestamp) & 0xff),
 		};
 
-		//TODO: do we really need to have this sign private and key or just public
-		byte[] signable = new byte[this.publicFingerprint.length + this.privateKey.length + this.key.length + timeBytes.length];
-		System.arraycopy(this.publicFingerprint, 0, signable, 0, this.publicFingerprint.length);
-		System.arraycopy(this.privateKey.length, 0, signable, this.publicFingerprint.length, this.privateKey.length);
-		System.arraycopy(this.key.length, 0, signable, this.publicFingerprint.length + this.privateKey.length, this.key.length);
-		System.arraycopy(timeBytes, 0, signable, this.publicFingerprint.length + this.privateKey.length + this.key.length, timeBytes.length);
+		byte[] signable = new byte[fingerprint.length + timeBytes.length];
+		System.arraycopy(fingerprint, 0, signable, 0, fingerprint.length);
+		System.arraycopy(timeBytes, 0, signable, fingerprint.length, timeBytes.length);
 
 		return signable;
 	}
 
-	public boolean verify(MasterKey master){
+	boolean verify(Key master){
 		try {
 			return master.verify(this.getSignable(), this.signature);
 		} catch (Exception e) {
@@ -124,14 +134,17 @@ class Archived{
 		}
 	}
 
-	public JSONObject asJSON() throws JSONException {
-		JSONObject data = new JSONObject();
-		data.put("public", this.publicFingerprint.toString());
-		data.put("private", this.privateKey.toString());
-		data.put("key", this.key.toString());
-		data.put("alg", this.algorithm);
-		data.put("timestamp", this.timestamp);
-		data.put("signature", this.signature.toString());
-		return data;
+	JSONObject asJSON() throws JSONException {
+		JSONObject json = new JSONObject();
+
+		json.put("fingerprint", Arrays.toString(this.fingerprint));
+		json.put("lock", this.lock);
+		json.put("key", Arrays.toString(this.key));
+		json.put("cipher", this.cipher);
+		json.put("private", Arrays.toString(this.privateKey));
+		json.put("timestamp", this.timestamp);
+		json.put("signature", Arrays.toString(this.signature));
+
+		return json;
 	}
 }
