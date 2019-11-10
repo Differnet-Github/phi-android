@@ -9,8 +9,8 @@ import androidx.annotation.Nullable;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
-import java.util.ArrayList;
 
 public class AccountManager extends Service {
 
@@ -20,17 +20,25 @@ public class AccountManager extends Service {
 		return null;
 	}
 
-	private ArrayList<Account> accounts = new ArrayList<>();
+	private Account[] accounts;
 
 	//When the manager is created we want to load the accounts from memory
 	@Override
 	public void onCreate(){
 		super.onCreate();
-		File[] accountDirs = new File(getBaseContext().getFilesDir(), "accounts").listFiles();
-		if(accountDirs != null){
-			for(int i = accountDirs.length - 1; i > -1; i--){
+		File[] accounts = new File(getBaseContext().getFilesDir(), "accounts").listFiles(new FileFilter() {
+			@Override
+			public boolean accept(File file) {
+				return file.isDirectory();
+			}
+		});
+
+		if(accounts != null){
+			this.accounts = new Account[accounts.length];
+
+			for(int i = accounts.length - 1; i > -1; i--){
 				try {
-					accounts.add(new Account(accountDirs[i]));
+					this.accounts[i] = new Account(accounts[i]);
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -46,9 +54,9 @@ public class AccountManager extends Service {
 	//When the manager is destroyed we want to save all accounts
 	@Override
 	public void onDestroy(){
-		for(int i = accounts.size() - 1; i > -1; i--){
+		for(int i = accounts.length - 1; i > -1; i--){
 			try {
-				accounts.get(i).save();
+				accounts[i].save();
 			} catch (JSONException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
@@ -59,32 +67,42 @@ public class AccountManager extends Service {
 
 	// Function to create a new account
 	public String createAccount() throws Exception {
-		Account newAccount = new Account();
-		accounts.add(newAccount);
-		return newAccount.getID();
+		Account[] newArr = new Account[this.accounts.length + 1];
+
+		System.arraycopy(accounts, 0, newArr, 0, accounts.length);
+		newArr[accounts.length] = new Account();
+		accounts = newArr;
+
+		return accounts[accounts.length - 1].id;
 	}
 
 	// Function to remove an account
 	public void removeAccount(String id){
-		for(int i = accounts.size() - 1; i > -1; i--){
-			if(accounts.get(i).getID() == id){
-				accounts.remove(i);
+		for(int i = accounts.length - 1; i > -1; i--){
+			if(accounts[i].id == id){
+				Account[] newArr = new Account[accounts.length + 1];
+				System.arraycopy(accounts, 0, newArr, 0, i);
+				System.arraycopy(accounts, i, newArr, i, accounts.length + 1 - i);
+				accounts = newArr;
 				return;
 			}
 		}
 	}
 
-	public Account[] getAccounts(){
+	public String[] getAccounts(){
 		//TODO: return account list
-		Account[] accounts = new Account[this.accounts.size()];
-		for(int i = this.accounts.size() - 1; i > -1; i--){
-			accounts[i] = this.accounts.get(i);
+		String[] accounts = new String[this.accounts.length];
+		for(int i = this.accounts.length - 1; i > -1; i--){
+			accounts[i] = this.accounts[i].id;
 		}
 		return accounts;
 	}
 
 	public Account getAccount(String id){
-		//TODO: return the target account
-		return null;
+		for(int i = this.accounts.length - 1; i > -1; i--) {
+			if(this.accounts[i].id = id){
+				return  this.accounts[i];
+			}
+		}
 	}
 }

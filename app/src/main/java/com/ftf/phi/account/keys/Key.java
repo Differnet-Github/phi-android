@@ -24,31 +24,38 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
-public class Key {
+/* This is the key object. It can be encrypted and decrypt with user information */
+public class Key implements Savable{
+	// default key information
 	private static final String KEY_FACTORY = "EC";
 	private static final String CIPHER = "AES/ECB/PKCS5PADDING";
 	private static final String HASH = "SHA-256";
 
+	private static final int DEFAULT_KEY_SIZE = 2048;
+
+	// Type of asymetic key that is used
 	private String factory;
 
 	PublicKey publicKey;
 
+	// Private key encryption information
 	private String cipher;
 	private byte[] ePrivateKey;
 	PrivateKey privateKey;
 
+	// Authentication method
 	private Authentication keys;
 
+	//Flag for if the private key is locked
 	public boolean locked;
 
+	// create new key
 	public Key() throws NoSuchAlgorithmException {
-		this(R.integer.default_key_size);
+		this(DEFAULT_KEY_SIZE);
 	}
-
 	private Key(int keySize) throws NoSuchAlgorithmException {
 		this(keySize, KEY_FACTORY);
 	}
-
 	private Key(int keySize, String factory) throws NoSuchAlgorithmException {
 		KeyPairGenerator keyGen = KeyPairGenerator.getInstance(factory);
 		keyGen.initialize(keySize);
@@ -65,6 +72,7 @@ public class Key {
 		this.locked = false;
 	}
 
+	// Import key
 	public Key(JSONObject fileData) throws JSONException {
 
 		this.factory = fileData.getString("factory");
@@ -84,6 +92,7 @@ public class Key {
 		this.keys = new Authentication(fileData.getJSONArray("keys"));
 	}
 
+	// Lock the key
 	public void lock() throws NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, NoSuchPaddingException, IllegalBlockSizeException {
 		if(!this.locked){
 			Cipher cipher = Cipher.getInstance(this.cipher);
@@ -93,6 +102,7 @@ public class Key {
 			this.privateKey = null;
 		}
 	}
+	// Unlock the key
 	public void unlock() throws NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException, IllegalBlockSizeException {
 		if(this.locked){
 			Cipher cipher = Cipher.getInstance(this.cipher);
@@ -103,6 +113,7 @@ public class Key {
 		}
 	}
 
+	// encrypt some data
 	public byte[] encrypt(byte[] data) throws NoSuchAlgorithmException, NoSuchPaddingException {
 		Cipher cipher = Cipher.getInstance(this.getCipher());
 		try {
@@ -117,6 +128,7 @@ public class Key {
 		}
 		return new byte[0];
 	}
+	// decrypt some data
 	public byte[] decrypt(byte[] data) throws Exception {
 		if(this.locked){
 			//TODO: name exception better
@@ -144,6 +156,7 @@ public class Key {
 		return new byte[0];
 	}
 
+	// get the cipher that we used
 	public String getCipher(){
 		//TODO: support more
 		switch(this.factory){
@@ -153,6 +166,7 @@ public class Key {
 		return null;
 	}
 
+	// verify a signature
 	boolean verify(byte[] data, byte[] signature) throws NoSuchAlgorithmException {
 		Signature checker = Signature.getInstance(this.getSigner());
 
@@ -167,6 +181,7 @@ public class Key {
 		}
 		return false;
 	}
+	// create a signature
 	public byte[] sign(byte[] data) throws Exception {
 		if(this.locked){
 			//TODO: name exception better
@@ -186,6 +201,7 @@ public class Key {
 		return new byte[0];
 	}
 
+	// get what we are using to sign
 	public String getSigner(){
 		//TODO: support more
 		switch(this.factory) {
@@ -195,16 +211,19 @@ public class Key {
 		return null;
 	}
 
+	// get the fingerprint of the key
 	public byte[] getFingerprint() throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		return md.digest(this.privateKey.getEncoded());
 	}
 
+	//Get the hash we used for the fingerprint
 	public String getHasher(){
 		return HASH;
 	}
 
-	public JSONObject asJSON() throws JSONException {
+	// Get as json
+	protected JSONObject asJSON() throws JSONException {
 		JSONObject json = new JSONObject();
 
 		json.put("factory", this.factory);
@@ -224,5 +243,10 @@ public class Key {
 		json.put("keys", this.keys.asJSON());
 
 		return json;
+	}
+
+	// Export as Savable
+	public String export(){
+		return this.asJSON.toString();
 	}
 }

@@ -7,7 +7,7 @@ import org.json.JSONObject;
 
 import java.security.NoSuchAlgorithmException;
 
-//TODO: create more factors
+// Factors are just ways of logging in that can be chained together
 public interface Factor {
 	void getKey(ByteCallback callback) throws NoSuchAlgorithmException;
 	JSONObject asJSON() throws JSONException;

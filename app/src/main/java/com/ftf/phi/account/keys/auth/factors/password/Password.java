@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -63,15 +64,16 @@ import javax.crypto.spec.PBEKeySpec;
 public class Password implements Factor {
 	private static final String PASSWORD_HASH = "PBKDF2withHmacSHA256";
 
+	// Classic password things:
 	private String hash;
 	private byte[] salt;
 	private int iterations;
 	private int keyLength;
 
+	// Create new password
 	public Password(){
 		this(PASSWORD_HASH, 999999, 64, 256);
 	}
-
 	public Password(String hash, int iterations, int saltBytes, int keyLength){
 		this.hash = hash;
 		this.iterations = iterations;
@@ -83,6 +85,7 @@ public class Password implements Factor {
 		this.keyLength = keyLength;
 	}
 
+	// Import password
 	public Password(JSONObject fileData) throws JSONException {
 		this.hash = fileData.getString("hash");
 		this.salt = fileData.getString("salt").getBytes();
@@ -90,11 +93,13 @@ public class Password implements Factor {
 		this.keyLength = fileData.getInt("keyLength");
 	}
 
+	// Get the key fro mthe password
 	@Override
 	public void getKey(final ByteCallback callback) throws NoSuchAlgorithmException {
 		//TODO: support more hashes
 		switch(this.hash){
 			case "PBKDF2withHmacSHA256":
+				// Run the popup for the password
 				new Popup(new ByteCallback() {
 					@Override
 					public void call(byte[] password) {
@@ -116,6 +121,7 @@ public class Password implements Factor {
 		}
 	}
 
+	// Export the key as json
 	@Override
 	public JSONObject asJSON() throws JSONException {
 		JSONObject json = new JSONObject();
@@ -123,7 +129,7 @@ public class Password implements Factor {
 		json.put("type", "password");
 
 		json.put("hash", this.hash);
-		json.put("salt", this.salt.toString());
+		json.put("salt", Arrays.toString(this.salt));
 		json.put("iterations", this.iterations);
 		json.put("keyLength", this.keyLength);
 

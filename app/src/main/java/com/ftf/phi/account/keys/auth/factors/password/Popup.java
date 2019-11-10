@@ -16,6 +16,7 @@ import com.ftf.phi.ByteCallback;
 import com.ftf.phi.application.Phi;
 
 //TODO: have sperate password creater with andvanced setting
+/* This is the fragment for the password popup */
 class Popup extends Fragment {
 	private View view;
 

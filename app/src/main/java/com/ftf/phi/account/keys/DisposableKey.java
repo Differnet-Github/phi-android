@@ -6,25 +6,33 @@ import org.json.JSONObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
-public class DisposableKey extends Key {
+/* DisposableKeys are just like Master keys but they are signed */
+public class DisposableKey extends Key implements Savable {
 	private long timestamp;
 	private byte[] signature;
 
 	private String signer;
 
+	// Create a DisposableKey from a master
 	public DisposableKey(Key master) throws NoSuchAlgorithmException {
 		super();
 		this.setMaster(master);
 	}
 
+	// Import a DisposableKey
 	public DisposableKey(Key master, JSONObject fileData) throws JSONException {
 		super(fileData);
+		//TODO: import signature
+		//TODO: check signature
 	}
 
+	// Set the master key for this key
 	private void setMaster(Key master){
 		try{
+			// Update the time
 			this.timestamp = new Date().getTime();
 
+			// Sign it
 			this.signer = master.getSigner();
 			this.signature = master.sign(this.getSignable());
 		} catch (Exception e) {
@@ -32,6 +40,7 @@ public class DisposableKey extends Key {
 		}
 	}
 
+	// Check the signature on this key
 	private boolean check(Key master){
 		try{
 			return master.verify(this.getSignable(), this.signature);
@@ -41,6 +50,7 @@ public class DisposableKey extends Key {
 		}
 	}
 
+	// Get the key in a signable format
 	private byte[] getSignable(){
 		byte[] publicBytes = this.publicKey.getEncoded();
 		byte[] timeBytes = new byte[]{
@@ -60,8 +70,9 @@ public class DisposableKey extends Key {
 		return signable;
 	}
 
+	// Export the DisposableKey as a string
 	@Override
-	public JSONObject asJSON() throws JSONException {
+	public String export() throws JSONException {
 		JSONObject json = super.asJSON();
 
 		json.put("timestamp", this.timestamp);
@@ -69,6 +80,6 @@ public class DisposableKey extends Key {
 		json.put("signer", this.signer);
 		json.put("signature", this.signature);
 
-		return json;
+		return json.toString();
 	}
 }

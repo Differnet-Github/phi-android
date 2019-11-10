@@ -13,24 +13,24 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
-//TODO: store with user and not in account
-public class Archive {
-
-	private Key master;
+/* Archive is a list of old disposable keys that the account had */
+public class Archive implements Savable {
 	private ArrayList<Archived> archive = new ArrayList<>();
 
-	public Archive(Key master){
-		this.master = master;
-	}
+	// New archive constructor
+	public Archive(){}
 
+	// Import archive
 	public Archive(Key master, JSONArray archive){
-		this.master = master;
-
+		// verify the contents of th imported archive
 		for(int i = archive.length() - 1; i > -1; i--){
 			try {
 				Archived archived = new Archived(archive.getJSONObject(i));
 				if(archived.verify(master)){
 					this.archive.add(archived);
+				}
+				else{
+					//TODO: give users some kind of warning
 				}
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -38,48 +38,59 @@ public class Archive {
 		}
 	}
 
-	public void add(DisposableKey disposable){
+	// Add a disposable key to the archive
+	public void add(Key master, DisposableKey disposable){
 		try{
-			this.archive.add(new Archived(this.master, disposable));
+			this.archive.add(new Archived(master, disposable));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public JSONArray asJSON() throws JSONException {
+	// Export the archive as a savable string
+	public String export() throws JSONException {
 		JSONArray data = new JSONArray();
 		for(int i = archive.size() - 1; i > -1; i--){
 			data.put(i, archive.get(i).asJSON());
 		}
-		return data;
+		return data.toString();
 	}
 }
 
+/* Archive objects are just single instances of archived keys */
 class Archived{
+	//Default algs and sizes used
 	private static final String HASH = "SHA-256";
 	private static final String CIPHER = "SHA-256";
 	private static final int KEY_SIZE = 256;
 
+	// The fingerprint of the disposable key
 	private byte[] fingerprint;
 
+	// Algs this arcive uses
 	private String cipher;
 	private String lock;
 	private byte[] key;
 
+	// Private key of this arcive
 	private byte[] privateKey;
 
+	// Time stamp saved
 	private long timestamp;
 
+	// signature on the archive
 	private byte[] signature;
 
+	// Create a new archive with a master key and a disposable key
 	Archived(Key master, DisposableKey disposable) throws Exception {
 		this(master, disposable, CIPHER, KEY_SIZE);
 	}
-
-	private Archived(Key master, DisposableKey disposable, String cipher, int keySize) throws Exception {
+	Archived(Key master, DisposableKey disposable, String cipher, int keySize) throws Exception {
+		// Gen the fingerprint
 		MessageDigest md = MessageDigest.getInstance(HASH);
 		this.fingerprint =  md.digest(disposable.publicKey.getEncoded());
 
+		//encrypt the private key
 		KeyGenerator keyGen = KeyGenerator.getInstance("AES");
 		keyGen.init(keySize);
 		SecretKey key = keyGen.generateKey();
@@ -94,9 +105,11 @@ class Archived{
 
 		this.timestamp = new Date().getTime();
 
+		// sign it
 		this.signature = master.sign(this.getSignable());
 	}
 
+	// import a archive
 	Archived(JSONObject fileData) throws JSONException {
 		this.fingerprint = fileData.getString("fingerprint").getBytes();
 		this.lock = fileData.getString("lock");
@@ -107,6 +120,7 @@ class Archived{
 		this.signature = fileData.getString("signature").getBytes();
 	}
 
+	// get the archive in a signable format
 	private byte[] getSignable(){
 		byte[] timeBytes = new byte[]{
 				(byte) ((this.timestamp >> 56) & 0xff),
@@ -126,6 +140,7 @@ class Archived{
 		return signable;
 	}
 
+	// verify the archive with a master key
 	boolean verify(Key master){
 		try {
 			return master.verify(this.getSignable(), this.signature);
@@ -134,6 +149,7 @@ class Archived{
 		}
 	}
 
+	// export the archive as a JSONObject
 	JSONObject asJSON() throws JSONException {
 		JSONObject json = new JSONObject();
 

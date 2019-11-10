@@ -1,11 +1,10 @@
 package com.ftf.phi.network.api;
 
-import com.ftf.phi.account.Files;
+import com.ftf.phi.account.Files.FileManager;
 import com.ftf.phi.network.Method;
 import com.ftf.phi.network.Restful;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -13,9 +12,9 @@ import java.io.OutputStream;
 import java.util.Arrays;
 
 public class V1 extends Restful {
-	private Files fileSystem;
+	private FileManager fileSystem;
 
-	public V1(final Files fileSystem){
+	public V1(final FileManager fileSystem){
 		this.fileSystem = fileSystem;
 
 		//GET ROUTES
