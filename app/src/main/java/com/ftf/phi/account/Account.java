@@ -9,6 +9,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 public class Account {
 
@@ -19,47 +20,82 @@ public class Account {
 
 	private FileManager files;
 
-	Account(String account) throws Exception {
-		files = new FileManager(account);
-
-		JSONObject account = new JSONObject(Arrays.toString(files.readFile("account.json", true)));
-		this.master = new Key(account.getJSONObject("master"));
-		this.disposable = new DisposableKey(master, account.getJSONObject("disposable"));
-
-		this.network = new Network(Arrays.toString(files.readFile("network.json", true)));
-	}
-
-	public void newDisposable() throws NoSuchAlgorithmException {
-		this.disposable = new DisposableKey(this.master);
-
-		this.files.setDisposable(disposable);
-	}
-
-	public void logout(){
+	Account() {
 		try {
-			this.disposable.lock();
-		} catch (Exception e) {
+			this.files = new FileManager();
+			this.master = new Key(new JSONObject(this.files.readFile("master.json", true).toString()));
+			this.disposable = new DisposableKey(this.master, new JSONObject(this.files.readFile("disposable.json", true).toString()));
+
+			this.network = new Network(Arrays.toString(this.files.readFile("network.json", true)));
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void login(){
+	Account(File account) {
+		try {
+			this.files = new FileManager(account);
+
+			this.master = new Key(new JSONObject(this.files.readFile("master.json", true).toString()));
+			this.disposable = new DisposableKey(this.master, new JSONObject(this.files.readFile("disposable.json", true).toString()));
+
+			this.network = new Network(Arrays.toString(this.files.readFile("network.json", true)));
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void newKey(Runnable callback) {
+		try{
+			this.disposable = new DisposableKey(this.master);
+			this.files.newKey(disposable);
+			callback.run();
+		}
+		catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void logout(Runnable callback){
+		try {
+			this.disposable.lock();
+			callback.run();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void login(Runnable callback){
 		try {
 			this.disposable.unlock();
-		} catch (Exception e) {
+			callback.run();
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 		}
 		//TODO: read messages from message buffer
 	}
 
-	void save() throws Exception {
+	//TODO: get hash of master public key
+	public void getID(Consumer<String> callback) {
+		try {
+			callback.accept(Arrays.toString(this.master.getFingerprint()));
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
+	}
+
+	void save(Runnable callback) throws Exception {
+		//TODO: multi thread
 		// Save the file system keys
-		files.save();
-		// Save the network keys
-		files.writeFile("network.json", network.export().getBytes(), true);
-		// Save the account keys
-		JSONObject data = new JSONObject();
-		data.put("master", this.master.asJSON());
-		data.put("disposable", this.disposable.asJSON());
+		files.save(this.disposable);
+		// Save the keys
+		files.writeFile("network.json", this.network, true);
+		files.writeFile("master.json", this.master, true);
+		files.writeFile("disposable.json", this.disposable, true);
+		callback.run();
 	}
 }

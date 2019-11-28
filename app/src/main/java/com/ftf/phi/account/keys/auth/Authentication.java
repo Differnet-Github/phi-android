@@ -7,22 +7,19 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
+import java.util.function.Consumer;
 
 /* Authentication is the master class for all account authentication
- * It can contain several ways of loggin into an account
+ * It can contain several ways of login into an account
  */
-public class Authentication implements Savable{
+public class Authentication {
 	// Bytes for the master key
 	private static final int KEY_BYTES = 256;
 
 	// Methods are used to encrypt the key
 	ArrayList<Method> methods = new ArrayList<>();
 
-	// Default construstor dosnt do anything but still works
+	// Default constructor doesn't do anything but still works
 	public Authentication(){}
 
 	// Import Auth from account
@@ -34,16 +31,17 @@ public class Authentication implements Savable{
 	}
 
 	// Get the key from a target method
-	public byte[] getKey() throws IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
-		return this.getKey(0);
+	public void getKey(Consumer<byte[]> callback) throws NoSuchAlgorithmException {
+		this.getKey(0, callback);
 	}
-	public byte[] getKey(int method) throws IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+
+	public void getKey(int method, Consumer<byte[]> callback) throws NoSuchAlgorithmException {
 		//TODO: let user pick what method they are going to use
-		return this.methods.get(method).getKey();
+		this.methods.get(method).getKey(callback);
 	}
 
 	// add a method to the authentication
-	public void add(Method method) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+	public void add(Method method) throws InvalidKeyException {
 		if(this.methods.size() != 0){
 			throw new InvalidKeyException("First key already defined");
 		}
@@ -54,7 +52,7 @@ public class Authentication implements Savable{
 		method.setKey(key);
 		this.methods.add(method);
 	}
-	public void add(Method method, int hostMethod) throws IllegalBlockSizeException, InvalidKeyException, BadPaddingException, NoSuchAlgorithmException, NoSuchPaddingException {
+	public void add(Method method, int hostMethod) throws NoSuchAlgorithmException{
 		if(this.methods.size() == 0){
 			byte[] key = new byte[KEY_BYTES];
 			SecureRandom random = new SecureRandom();
@@ -64,19 +62,21 @@ public class Authentication implements Savable{
 			this.methods.add(method);
 		}
 		else {
-			method.setKey(this.getKey(hostMethod));
-			this.methods.add(method);
+			this.getKey(hostMethod, (byte[] key) -> {
+				method.setKey(key);
+				this.methods.add(method);
+			});
 		}
 	}
 
 	// Get the authentication as a string
-	public String export() throws JSONException {
+	public JSONArray asJSON() throws JSONException {
 		JSONArray json = new JSONArray();
 
 		for(int i = methods.size() - 1; i > -1; i--){
 			json.put(i, methods.get(i).asJSON());
 		}
 
-		return json.getString();
+		return json;
 	}
 }

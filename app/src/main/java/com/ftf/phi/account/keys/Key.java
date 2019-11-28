@@ -1,6 +1,6 @@
 package com.ftf.phi.account.keys;
 
-import com.ftf.phi.R;
+import com.ftf.phi.account.Files.Savable;
 import com.ftf.phi.account.keys.auth.Authentication;
 
 import org.json.JSONException;
@@ -25,7 +25,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 /* This is the key object. It can be encrypted and decrypt with user information */
-public class Key implements Savable{
+public class Key implements Savable {
 	// default key information
 	private static final String KEY_FACTORY = "EC";
 	private static final String CIPHER = "AES/ECB/PKCS5PADDING";
@@ -93,23 +93,34 @@ public class Key implements Savable{
 	}
 
 	// Lock the key
-	public void lock() throws NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, NoSuchPaddingException, IllegalBlockSizeException {
+	public void lock() throws NoSuchAlgorithmException {
 		if(!this.locked){
-			Cipher cipher = Cipher.getInstance(this.cipher);
-			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(this.keys.getKey(), "AES"));
-
-			this.ePrivateKey = cipher.doFinal(this.privateKey.getEncoded());
-			this.privateKey = null;
+			this.keys.getKey((byte[] key) -> {
+				try {
+					Cipher cipher = Cipher.getInstance(this.cipher);
+					cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"));
+					this.ePrivateKey = cipher.doFinal(this.privateKey.getEncoded());
+					this.privateKey = null;
+				} catch (BadPaddingException | IllegalBlockSizeException | NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
+					e.printStackTrace();
+				}
+			});
 		}
 	}
 	// Unlock the key
-	public void unlock() throws NoSuchPaddingException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException, IllegalBlockSizeException {
+	public void unlock() throws NoSuchAlgorithmException {
 		if(this.locked){
-			Cipher cipher = Cipher.getInstance(this.cipher);
-			cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(this.keys.getKey(), "AES"));
+			this.keys.getKey((byte[] key) -> {
+				try {
+					Cipher cipher = Cipher.getInstance(this.cipher);
+					cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"));
 
-			this.ePrivateKey = null;
-			this.privateKey = (PrivateKey) new X509EncodedKeySpec(this.privateKey.getEncoded());
+					this.ePrivateKey = null;
+					this.privateKey = (PrivateKey) new X509EncodedKeySpec(this.privateKey.getEncoded());
+				} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
+					e.printStackTrace();
+				}
+			});
 		}
 	}
 
@@ -146,11 +157,7 @@ public class Key implements Savable{
 		try {
 			cipher.init(Cipher.DECRYPT_MODE, this.privateKey);
 			return cipher.doFinal(data);
-		} catch (InvalidKeyException e) {
-			e.printStackTrace();
-		} catch (BadPaddingException e) {
-			e.printStackTrace();
-		} catch (IllegalBlockSizeException e) {
+		} catch (InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
 			e.printStackTrace();
 		}
 		return new byte[0];
@@ -174,9 +181,7 @@ public class Key implements Savable{
 			checker.initVerify(this.publicKey);
 			checker.update(data);
 			return checker.verify(signature);
-		} catch (SignatureException e) {
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
+		} catch (SignatureException | InvalidKeyException e) {
 			e.printStackTrace();
 		}
 		return false;
@@ -193,9 +198,7 @@ public class Key implements Savable{
 			signature.initSign(this.privateKey);
 			signature.update(data);
 			return signature.sign();
-		} catch (SignatureException e) {
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
+		} catch (SignatureException | InvalidKeyException e) {
 			e.printStackTrace();
 		}
 		return new byte[0];
@@ -246,7 +249,11 @@ public class Key implements Savable{
 	}
 
 	// Export as Savable
-	public String export(){
-		return this.asJSON.toString();
+	public String export() throws JSONException {
+		try {
+			return this.asJSON().toString();
+		} catch (JSONException e) {
+			return "{}";
+		}
 	}
 }

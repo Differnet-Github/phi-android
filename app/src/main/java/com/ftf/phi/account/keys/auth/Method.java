@@ -1,6 +1,5 @@
 package com.ftf.phi.account.keys.auth;
 
-import com.ftf.phi.ByteCallback;
 import com.ftf.phi.account.keys.auth.factors.password.Password;
 
 import org.json.JSONArray;
@@ -9,6 +8,7 @@ import org.json.JSONObject;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.function.Consumer;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -25,15 +25,15 @@ public class Method {
 	private static final String MERGE = "PBKDF2withHmacSHA256";
 
 	// Array of all of the factors
-	Factor[] factors;
+	private Factor[] factors;
 
 	// The key we want to decrypt
-	byte[] key;
+	private byte[] key;
 
 	// Cipher that was used
-	String cipher;
+	private String cipher;
 	// Key mixer that was used
-	String merge;
+	private String merge;
 
 	// Create a method from a single factor
 	public Method(Factor factor){
@@ -72,23 +72,32 @@ public class Method {
 	}
 
 	// Set the encrypted key
-	public void setKey(byte[] key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-		Cipher cipher = Cipher.getInstance(this.cipher);
-		cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(getHalfKey(), "AES"));
-		this.key = cipher.doFinal(this.key);
+	public void setKey(byte[] key) {
+		try {
+			getHalfKey((byte[] halfKey) -> {
+				try {
+				Cipher cipher = Cipher.getInstance(this.cipher);
+				cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(halfKey, "AES"));
+				this.key = cipher.doFinal(this.key);
+				}
+				catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | IllegalBlockSizeException | InvalidKeyException e) {
+					e.printStackTrace();
+				}
+			});
+		}
+		catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// Mix together all of the keys into a half way key
-	private byte[] getHalfKey() throws NoSuchAlgorithmException {
+	private void getHalfKey(Consumer<byte[]> callback) throws NoSuchAlgorithmException {
 		// Run through all of the factors
 		final byte[][] keys = new byte[this.factors.length][];
 		for(int i = this.factors.length - 1; i > -1; i--){
 			final int finalI = i;
-			this.factors[i].getKey(new ByteCallback() {
-				@Override
-				public void call(byte[] authToken) {
-					keys[finalI] = authToken;
-				}
+			this.factors[i].getKey((byte[] authToken) -> {
+				keys[finalI] = authToken;
 			});
 		}
 		// Mix the keys from the factors
@@ -101,14 +110,21 @@ public class Method {
 			default:
 				throw new NoSuchAlgorithmException();
 		}
-		return halfKey;
+		callback.accept(halfKey);
 	}
 
 	// Get the encrypted key
-	public byte[] getKey() throws NoSuchAlgorithmException, InvalidKeyException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
-		Cipher cipher = Cipher.getInstance(this.cipher);
-		cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(getHalfKey(), "AES"));
-		return cipher.doFinal(this.key);
+	public void getKey(Consumer<byte[]> callback) throws NoSuchAlgorithmException {
+		getHalfKey((byte[] halfKey) -> {
+			try {
+				Cipher cipher = Cipher.getInstance(this.cipher);
+				cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(halfKey, "AES"));
+				callback.accept(cipher.doFinal(this.key));
+			}
+			catch (NoSuchAlgorithmException | NoSuchPaddingException | BadPaddingException | IllegalBlockSizeException | InvalidKeyException e) {
+				e.printStackTrace();
+			}
+		});
 	}
 
 	// get the method as a JSONObject

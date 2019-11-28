@@ -7,12 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.ftf.phi.R;
-import com.ftf.phi.account.Account;
 
 public class AccountLogin extends Fragment {
-	Account account;
+	String account;
 
-	public void setAccount(Account account){
+	public void setAccount(String account){
 		this.account = account;
 	}
 

@@ -12,24 +12,23 @@ import android.widget.PopupWindow;
 import androidx.fragment.app.Fragment;
 
 import com.ftf.phi.R;
-import com.ftf.phi.ByteCallback;
 import com.ftf.phi.application.Phi;
 
-//TODO: have sperate password creater with andvanced setting
+import java.util.function.Consumer;
+
+//TODO: have separate password creator with advanced setting
 /* This is the fragment for the password popup */
 class Popup extends Fragment {
 	private View view;
 
-	Popup(final ByteCallback callback){
+	Popup(final Consumer<byte[]> callback){
 		Activity currentActivity = Phi.getInstance().getCurrentActivity();
 		this.view = currentActivity.getLayoutInflater().inflate(R.layout.password, null);
 
 		final Button submitButton = this.view.findViewById(R.id.submit);
-		submitButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				EditText password = view.findViewById(R.id.password);
-				callback.call(password.getText().toString().getBytes());
-			}
+		submitButton.setOnClickListener(v -> {
+			EditText password = view.findViewById(R.id.password);
+			callback.accept(password.getText().toString().getBytes());
 		});
 
 		PopupWindow popup = new PopupWindow(view, ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT);

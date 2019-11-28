@@ -20,6 +20,7 @@ public class Network implements Savable {
 	}
 
 	public String export(){
+		return "";
 		//TODO: Export network
 	}
 

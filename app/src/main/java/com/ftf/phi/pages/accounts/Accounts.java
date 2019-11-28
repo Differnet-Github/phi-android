@@ -16,6 +16,8 @@ import com.ftf.phi.application.Phi;
 import com.ftf.phi.pages.Message;
 import com.ftf.phi.pages.Settings;
 
+import java.security.NoSuchAlgorithmException;
+
 public class Accounts extends Page {
 
 	@Override
@@ -23,25 +25,21 @@ public class Accounts extends Page {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.accounts);
 
-		final AccountManager accountManager = new AccountManager();
-		Account[] accounts = accountManager.getAccounts();
-
-		FragmentManager fragmentManager = getFragmentManager();
-		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-		for(int i = accounts.length - 1; i > -1; i--){
-			AccountLogin login = new AccountLogin();
-			login.setAccount(accounts[i]);
-			fragmentTransaction.add(R.id.accounts, login);
-		}
-		fragmentTransaction.commit();
-
-
-		final Button newAccount = this.findViewById(R.id.new_account);
-		newAccount.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v){
-				String account = accountManager.createAccount();
-				Log.d("new account", account);
+		AccountManager.getInstance().getAccounts((String[] accounts) -> {
+			FragmentManager fragmentManager = getFragmentManager();
+			FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+			for(int i = accounts.length - 1; i > -1; i--){
+				AccountLogin login = new AccountLogin();
+				login.setAccount(accounts[i]);
+				fragmentTransaction.add(R.id.accounts, login);
 			}
+			fragmentTransaction.commit();
+
+
+			final Button newAccount = this.findViewById(R.id.new_account);
+			newAccount.setOnClickListener(v -> {
+				//TODO: pop up fragment for account creation then redirect page after creation
+			});
 		});
 	}
 

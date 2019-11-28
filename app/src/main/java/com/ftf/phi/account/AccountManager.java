@@ -1,32 +1,33 @@
 package com.ftf.phi.account;
 
-import android.app.Service;
-import android.content.Intent;
-import android.os.IBinder;
-
-import androidx.annotation.Nullable;
-
-import org.json.JSONException;
-
 import java.io.File;
 import java.io.FileFilter;
-import java.io.IOException;
+import java.util.function.Consumer;
 
-public class AccountManager extends Service {
+public class AccountManager {
 
-	@Nullable
-	@Override
-	public IBinder onBind(Intent intent) {
-		return null;
+	private static AccountManager instance;
+
+	public static AccountManager getInstance(){
+		if(instance == null){
+			instance = new AccountManager();
+		}
+		return instance;
 	}
 
 	private Account[] accounts;
 
-	//When the manager is created we want to load the accounts from memory
-	@Override
-	public void onCreate(){
-		super.onCreate();
-		File[] accounts = new File(getBaseContext().getFilesDir(), "accounts").listFiles(new FileFilter() {
+	private AccountManager(){
+		this.load();
+	}
+
+	// Load accounts from memory async
+	private void load(){
+		this.load(null);
+	}
+	private void load(Runnable callback){
+		// TODO: multi thread this
+		File[] accounts = new File("phi", "accounts").listFiles(new FileFilter() {
 			@Override
 			public boolean accept(File file) {
 				return file.isDirectory();
@@ -44,65 +45,76 @@ public class AccountManager extends Service {
 				}
 			}
 		}
+		if(callback != null){
+			callback.run();
+		}
 	}
 
-	@Override
-	public int onStartCommand(Intent intent, int flags, int startId){
-		return START_STICKY;
-	}
+	// Create a new account
+	public void create(Consumer<String> callback){
+		Runnable loader = () -> {
+			Account[] newArr = new Account[this.accounts.length + 1];
 
-	//When the manager is destroyed we want to save all accounts
-	@Override
-	public void onDestroy(){
-		for(int i = accounts.length - 1; i > -1; i--){
+			System.arraycopy(accounts, 0, newArr, 0, accounts.length);
 			try {
-				accounts[i].save();
-			} catch (JSONException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	// Function to create a new account
-	public String createAccount() throws Exception {
-		Account[] newArr = new Account[this.accounts.length + 1];
-
-		System.arraycopy(accounts, 0, newArr, 0, accounts.length);
-		newArr[accounts.length] = new Account();
-		accounts = newArr;
-
-		return accounts[accounts.length - 1].id;
-	}
-
-	// Function to remove an account
-	public void removeAccount(String id){
-		for(int i = accounts.length - 1; i > -1; i--){
-			if(accounts[i].id == id){
-				Account[] newArr = new Account[accounts.length + 1];
-				System.arraycopy(accounts, 0, newArr, 0, i);
-				System.arraycopy(accounts, i, newArr, i, accounts.length + 1 - i);
+				newArr[accounts.length] = new Account();
 				accounts = newArr;
-				return;
+				accounts[accounts.length - 1].getID(callback);
+			} catch (Exception e) {
+				e.printStackTrace();
+				callback.accept(null);
 			}
+		};
+
+		if(accounts == null){
+			load(loader);
+		}
+		else{
+			loader.run();
 		}
 	}
 
-	public String[] getAccounts(){
-		//TODO: return account list
+	public void delete(String id){
+		delete(id, null);
+	}
+
+	// Delete an account
+	public void delete(String id, Runnable callback){
+		for(int i = accounts.length - 1; i > -1; i--){
+			int j = i;
+			accounts[i].getID((String acccountID) -> {
+				if(acccountID.equals(id)){
+					Account[] newArr = new Account[accounts.length + 1];
+					System.arraycopy(accounts, 0, newArr, 0, j);
+					System.arraycopy(accounts, j, newArr, j, accounts.length + 1 - j);
+					accounts = newArr;
+					if(callback != null){
+						callback.run();
+					}
+				}
+			});
+		}
+	}
+
+	public void getAccounts(Consumer<String[]> callback) {
 		String[] accounts = new String[this.accounts.length];
 		for(int i = this.accounts.length - 1; i > -1; i--){
-			accounts[i] = this.accounts[i].id;
+			int j = i;
+			this.accounts[i].getID((String id) -> {
+				accounts[j] = id;
+			});
 		}
-		return accounts;
+		callback.accept(accounts);
 	}
 
-	public Account getAccount(String id){
+	public void getAccount(String id, Consumer<Account> callback) {
 		for(int i = this.accounts.length - 1; i > -1; i--) {
-			if(this.accounts[i].id = id){
-				return  this.accounts[i];
-			}
+			int j = i;
+			this.accounts[i].getID((String accountID) -> {
+				if(accountID.equals(id)){
+					callback.accept(this.accounts[j]);
+				}
+			});
 		}
 	}
 }

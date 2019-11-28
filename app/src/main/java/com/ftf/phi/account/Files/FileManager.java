@@ -2,15 +2,19 @@ package com.ftf.phi.account.Files;
 
 import com.ftf.phi.R;
 import com.ftf.phi.account.keys.DisposableKey;
+import com.ftf.phi.account.keys.Key;
 
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Scanner;
 
 import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 
 /* The file manager class is in charge of encrypting and decrypt files for each account */
@@ -24,7 +28,7 @@ public class FileManager {
 	// Information for encrypting
 	// lock is the algorithm used to encrypt the key
 	private String lock;
-	// chipher is the algorithm used to encrypt the filesystem
+	// cipher is the algorithm used to encrypt the filesystem
 	private String cipher;
 
 	// Information about the key
@@ -39,6 +43,23 @@ public class FileManager {
 	// this is just signature data
 	private String signer;
 	private byte[] signature;
+
+	public FileManager() throws Exception {
+		// create a master and disposable key for the account
+		Key master = new Key();
+		DisposableKey disposable = new DisposableKey(master);
+
+		this.lock = disposable.getCipher();
+		this.cipher = "AES/ECB/PKCS5Padding";
+
+		// create a file system key
+		this.newKey(disposable);
+
+		// save the filesystem keys
+		this.save(disposable);
+		this.writeFile("master.json", master, true);
+		this.writeFile("disposable.json", disposable, true);
+	}
 
 	public FileManager(File root) throws Exception {
 		this.root = root;
@@ -59,22 +80,9 @@ public class FileManager {
 			this.signer = json.getString("signer");
 			this.signature = json.getString("signature").getBytes();
 		}
-		// If it dosn't exist create a file system
+		// If it does not exist create a file system
 		else {
-			// create a master and disposable key for the account
-			Key master = new Key();
-			DisposableKey disposable = new DisposableKey(master);
-
-			this.lock = disposable.getCipher();
-			this.cipher = "AES/ECB/PKCS5Padding";
-
-			// create a file system key
-			this.newKey(disposable);
-
-			// save the filesystem keys
-			this.save();
-
-			//TODO: write the master and disposable keys to the filesystem
+			throw new Exception();
 		}
 	}
 
@@ -226,31 +234,31 @@ public class FileManager {
 	}
 
 	//Lock the file system
-	void lock(DisposableKey disposable){
+	void lock(DisposableKey disposable) throws NoSuchPaddingException, NoSuchAlgorithmException {
 		// We only need to lock if it is unlocked
 		if(!this.locked){
-			this.key = this.disposable.encrypt(this.key);
+			this.key = disposable.encrypt(this.key);
 			this.locked = true;
-			this.lock = this.disposable.getCipher();
+			this.lock = disposable.getCipher();
 		}
 	}
 	//Unlock the file system with the key
-	void unlock(DisposableKey disposable) {
+	void unlock(DisposableKey disposable) throws Exception {
 		// We only need to unlock if it is locked
 		if(locked){
-			if(this.lock != this.disposable.getCipher()){
+			if(this.lock != disposable.getCipher()){
 				throw new Exception();
 			}
-			this.key = this.disposable.decrypt(this.key);
+			this.key = disposable.decrypt(this.key);
 			this.locked = false;
 		}
 	}
 
-	void newKey(DisposableKey disposable){
+	public void newKey(DisposableKey disposable){
 		//TODO: create new filesystem key
 	}
 
-	public void save(DisposableKey disposable){
+	public void save(DisposableKey disposable) throws Exception {
 		// set the time
 		this.timestamp = new Date().getTime();
 

@@ -1,6 +1,5 @@
 package com.ftf.phi.account.keys.auth.factors.password;
 
-import com.ftf.phi.ByteCallback;
 import com.ftf.phi.account.keys.auth.Factor;
 
 import org.json.JSONException;
@@ -10,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -93,27 +93,22 @@ public class Password implements Factor {
 		this.keyLength = fileData.getInt("keyLength");
 	}
 
-	// Get the key fro mthe password
+	// Get the key from the password
 	@Override
-	public void getKey(final ByteCallback callback) throws NoSuchAlgorithmException {
+	public void getKey(Consumer<byte[]> callback) throws NoSuchAlgorithmException {
 		//TODO: support more hashes
 		switch(this.hash){
 			case "PBKDF2withHmacSHA256":
 				// Run the popup for the password
-				new Popup(new ByteCallback() {
-					@Override
-					public void call(byte[] password) {
-						PBEKeySpec spec = new PBEKeySpec(password.toString().toCharArray(), salt, iterations, keyLength);
-						SecretKeyFactory skf;
+				new Popup((byte[] password) -> {
+					PBEKeySpec spec = new PBEKeySpec(Arrays.toString(password).toCharArray(), salt, iterations, keyLength);
+					SecretKeyFactory skf;
 
-						try {
-							skf = SecretKeyFactory.getInstance(hash);
-							callback.call(skf.generateSecret(spec).getEncoded());
-						} catch (NoSuchAlgorithmException e) {
-							e.printStackTrace();
-						} catch (InvalidKeySpecException e) {
-							e.printStackTrace();
-						}
+					try {
+						skf = SecretKeyFactory.getInstance(hash);
+						callback.accept(skf.generateSecret(spec).getEncoded());
+					} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+						e.printStackTrace();
 					}
 				});
 			default:
